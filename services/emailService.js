@@ -1,32 +1,30 @@
 const nodemailer = require('nodemailer');
 
+/**
+ * Sends a welcome email to a newly signed-up user.
+ * This version uses a professional static template instead of Gemini AI for reliability.
+ */
 const sendWelcomeEmail = async (user) => {
-    console.log(`[EmailService] Starting welcome email for: ${user.email}`);
-    let aiMessage = `Welcome to EduVerse AI, ${user.name}! We're thrilled to have you join our ${user.branch} community at Bharati Vidyapeeth College of Engineering. Explore your dashboard for recommended courses and AI tools to help you succeed!`;
+    console.log(`[EmailService] Preparing static welcome email for: ${user.email}`);
 
-    try {
-        console.log(`[EmailService] Requesting AI content from Gemini via Fetch...`);
-        const apiKey = process.env.OPENAI_API_KEY; // Using existing variable for Google Key
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+    // Professional static template with personalization
+    const welcomeMessage = `
+Dear ${user.name},
 
-        const response = await fetch(url, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                contents: [{
-                    parts: [{ text: `Write a short, professional, and welcoming email for a new student named ${user.name} who joined the ${user.branch} department at Bharati Vidyapeeth College of Engineering. Keep it concise.` }]
-                }]
-            })
-        });
+Welcome to EduVerse AI! 🎓
 
-        const data = await response.json();
-        if (data.candidates && data.candidates[0].content.parts[0].text) {
-            aiMessage = data.candidates[0].content.parts[0].text;
-            console.log(`[EmailService] AI Content generated successfully.`);
-        }
-    } catch (err) {
-        console.error(`[EmailService] Gemini Fetch Error (Using fallback):`, err.message);
-    }
+We are thrilled to have you join our academic community. Whether you're exploring the latest in ${user.branch} or using our AI-powered study tools, we're here to support your engineering journey at Bharati Vidyapeeth College of Engineering.
+
+Your account is now active. You can log in to your dashboard to:
+- Access personalized course recommendations for ${user.branch}.
+- Chat with our expert AI Academic Tutor.
+- Generate custom quizzes to test your knowledge.
+
+We're excited to see what you'll achieve!
+
+Best regards,
+The EduVerse AI Team
+    `;
 
     try {
         const transporter = nodemailer.createTransport({
@@ -38,13 +36,13 @@ const sendWelcomeEmail = async (user) => {
         });
 
         const mailOptions = {
-            from: process.env.EMAIL_USER,
+            from: `"EduVerse AI" <${process.env.EMAIL_USER}>`,
             to: user.email,
-            subject: 'Welcome to EduVerse AI 🎓',
-            text: aiMessage,
+            subject: 'Welcome to EduVerse AI - Let\'s Start Learning! 🎓',
+            text: welcomeMessage.trim(),
         };
 
-        console.log(`[EmailService] Sending email...`);
+        console.log(`[EmailService] Sending welcome email...`);
         await transporter.sendMail(mailOptions);
         console.log(`[EmailService] SUCCESS: Welcome email sent to ${user.email}`);
     } catch (err) {
